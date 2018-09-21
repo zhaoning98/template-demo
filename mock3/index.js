@@ -2,7 +2,7 @@ const http = require('http');
 const processRequest = require('./server');
 const port = 3000;
 
-const httpServer = http.createServer(function(req, res){
+const httpServer = http.createServer((req, res) => {
   processRequest(req, res)
 })
 
