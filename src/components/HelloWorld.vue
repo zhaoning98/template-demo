@@ -16,34 +16,37 @@ export default {
   },
   mounted () {
     this.getUserInfo(1)
-    this.getUserInfo(1)
-    this.getUserInfo(2)
-
-    setTimeout(() => {
-      this.getUserInfo(3)
-
-      this.getUserInfo(1)
-    }, 4000)
 
     this.errorRequestDemo()
+
+    this.requestPathDemo()
   },
   methods: {
     getUserInfo (_id) {
       this.axios({
-        url: '/users',
+        url: '/api/users.json',
         method: 'get',
         params: { 'id': _id }
       }).then(response => {
-        console.log(response)
+        console.log('users', response)
       })
     },
     errorRequestDemo () {
       this.axios({
-        url: '/users123',
+        url: '/getUsersInfo.json',
         method: 'get',
         params: {}
       }).then(response => {
-        this.data.push(response.data[0])
+        console.log('getUsersInfo', response)
+      })
+    },
+    requestPathDemo () {
+      this.axios({
+        url: '/api/',
+        method: 'get',
+        params: {}
+      }).then(response => {
+        console.log('requestPathDemo', response)
       })
     }
   }

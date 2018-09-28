@@ -3,72 +3,79 @@ const url = require('url')
 const path = require('path')
 const mime = require('./mime')
 
+const headers = {
+  'Access-Control-Allow-Origin': '*', // 允许跨域
+  'contentType': 'text/plain'
+}
+
 const processRequest = (request, response) => {
+
   let pathName = url.parse(request.url).pathname
   // 防止中文乱码
   pathName = decodeURI(pathName)
   // 获取资源文件的绝对路径
   let filePath = path.resolve(__dirname + '/mockapi/' + pathName)
 
-  // 301重定向，目录需以 `/` 结尾
-  if (!pathName.endsWith('/') && path.extname(pathName) === '') {
-    pathName += '/'
-    var redirect = 'http://' + request.headers.host + pathName
-    response.writeHead(301, {
-      location: redirect
-    })
-
-    response.end()
-  }
-
   // 文件后缀名
   let ext = path.extname(pathName)
   ext = ext ? ext.slice(1) : 'unknown'
   // 未知类型一律用 "text/plain" 类型
-  let contentType = mime[ext] || "text/plain"
+  headers.contentType = mime[ext] || "'text/plain'"
+
+  // 301重定向
+  if (!pathName.endsWith('/') && path.extname(pathName) === '') {
+    pathName += '/'
+    var redirect = 'http://' + request.headers.host + pathName
+
+    response.writeHead(301, { location: redirect })
+    response.end()
+  }
 
   fs.stat(filePath, (err, stats) => {
-    console.log('err::', err)
-    console.log('stats::', stats)
+    // 未找到文件
     if (err) {
-      response.writeHead(404, {"content-type": contentType})
+      headers['contentType'] = 'text/html'
+      response.writeHead(404, headers)
       response.end("<h1>404 Not Found</h1>")
     }
 
     // 文件
     if (!err && stats.isFile()) {
-      response.writeHead(200, {"content-type": contentType});
-      // 读文件
-      var stream = fs.createReadStream(filePath)
+      fs.readFile(filePath, (err, data) => {
+        if (err) {
+          response.writeHead(500, headers)
+          response.end('<h1>500 Server Error</h1>')
+        }
 
-      // 错误处理
-      stream.on('error', () => {
-        response.writeHead(500, {"content-type": contentType})
-        response.end('<h1>500 Server Error</h1>')
+        response.writeHead(200, headers);
+        response.end(data)
       })
-
-      stream.pipe(response)
-      response.end()
     }
 
     // 目录
     if (!err && stats.isDirectory()) {
       var html = '<head><meta charset="utf-8" /></head>'
+
       fs.readdir(filePath, (err, files) => {
         if (err) {
-          console.log("读取路径失败！")
+
+          html += `<div>读取路径失败！</div>`
+          response.writeHead(404, headers)
+          response.end(html)
+
         } else {
+          headers['contentType'] = 'text/html'
+          response.writeHead(200, headers)
+
           for (var file of files) {
             if (file === 'index.html') {
-              response.writeHead(200, {"content-type": "text/html"})
               response.end(file)
               break
             }
 
             html += `<div><a href="${file}">${file}</a></div>`
-            response.writeHead(200, {"content-type": "text/html"})
-            response.end(html)
           }
+          response.end(html)
         }
       })
     }
