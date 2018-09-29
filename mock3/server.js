@@ -5,7 +5,7 @@ const mime = require('./mime')
 
 const headers = {
   'Access-Control-Allow-Origin': '*', // 允许跨域
-  'contentType': 'text/plain'
+  'Content-Type': 'text/plain'
 }
 
 const processRequest = (request, response) => {
@@ -20,7 +20,7 @@ const processRequest = (request, response) => {
   let ext = path.extname(pathName)
   ext = ext ? ext.slice(1) : 'unknown'
   // 未知类型一律用 "text/plain" 类型
-  headers.contentType = mime[ext] || "'text/plain'"
+  headers['Content-Type'] = mime[ext] || "'text/plain'"
 
   // 301重定向
   if (!pathName.endsWith('/') && path.extname(pathName) === '') {
@@ -34,7 +34,7 @@ const processRequest = (request, response) => {
   fs.stat(filePath, (err, stats) => {
     // 未找到文件
     if (err) {
-      headers['contentType'] = 'text/html'
+      headers['Content-Type'] = 'text/html'
       response.writeHead(404, headers)
       response.end("<h1>404 Not Found</h1>")
     }
@@ -64,7 +64,7 @@ const processRequest = (request, response) => {
           response.end(html)
 
         } else {
-          headers['contentType'] = 'text/html'
+          headers['Content-Type'] = 'text/html'
           response.writeHead(200, headers)
 
           for (var file of files) {
